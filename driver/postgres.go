@@ -2,7 +2,7 @@ package driver
 
 import (
 	"github.com/jmoiron/sqlx"
-	"github.com/interactive-solutions/go-sql-migrate"
+	"github.com/interactive-solutions/go-sql-migrations"
 )
 
 type postgresDriver struct {

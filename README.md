@@ -10,8 +10,8 @@ executes a set of migration files based upon version name and name.
 package main
 
 import (
-	"github.com/interactive-solutions/go-sql-migrate"
-	"github.com/interactive-solutions/go-sql-migrate/driver"
+	"github.com/interactive-solutions/go-sql-migrations"
+	"github.com/interactive-solutions/go-sql-migrations/driver"
 )
 
 func migrate(host, user, password, dbname string) {
