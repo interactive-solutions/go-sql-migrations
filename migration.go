@@ -2,6 +2,7 @@ package migrations
 
 import (
 	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
@@ -10,7 +11,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"fmt"
 )
 
 const (
@@ -37,7 +37,7 @@ func (m Migrations) Len() int           { return len(m) }
 func (m Migrations) Less(i, j int) bool { return m[i].Version.Before(m[j].Version) }
 func (m Migrations) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 
-func (m Migrations) Up(driver Driver) {
+func (m Migrations) Up(driver Driver, verbose bool) {
 	sort.Reverse(m)
 
 	driver.CreateVersionsTable()
@@ -47,12 +47,15 @@ func (m Migrations) Up(driver Driver) {
 			continue
 		}
 
-		fmt.Println(migration.Content.Up)
+		if verbose {
+			fmt.Println(migration.Content.Up)
+		}
+
 		driver.Up(migration)
 	}
 }
 
-func (m Migrations) Down(driver Driver) {
+func (m Migrations) Down(driver Driver, verbose bool) {
 	sort.Sort(m)
 
 	driver.CreateVersionsTable()
@@ -62,7 +65,10 @@ func (m Migrations) Down(driver Driver) {
 			continue
 		}
 
-		fmt.Println(migration.Content.Up)
+		if verbose {
+			fmt.Println(migration.Content.Down)
+		}
+
 		driver.Down(migration)
 		break
 	}
