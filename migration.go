@@ -8,9 +8,10 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -37,10 +38,10 @@ func (m Migrations) Len() int           { return len(m) }
 func (m Migrations) Less(i, j int) bool { return m[i].Version.Before(m[j].Version) }
 func (m Migrations) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
 
-func (m Migrations) Up(driver Driver, verbose bool) {
-	sort.Reverse(m)
-
-	driver.CreateVersionsTable()
+func (m Migrations) Up(driver Driver, verbose bool) error {
+	if err := driver.CreateVersionsTable(); err != nil {
+		return err
+	}
 
 	for _, migration := range m {
 		if driver.HasExecuted(migration.VersionAsString()) {
@@ -51,27 +52,16 @@ func (m Migrations) Up(driver Driver, verbose bool) {
 			fmt.Println(migration.Content.Up)
 		}
 
-		driver.Up(migration)
+		if err := driver.Up(migration); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (m Migrations) Down(driver Driver, verbose bool) {
-	sort.Sort(m)
-
-	driver.CreateVersionsTable()
-
-	for _, migration := range m {
-		if !driver.HasExecuted(migration.VersionAsString()) {
-			continue
-		}
-
-		if verbose {
-			fmt.Println(migration.Content.Down)
-		}
-
-		driver.Down(migration)
-		break
-	}
+func (m Migrations) Down(driver Driver, verbose bool) error {
+	return errors.New("Dont use this, this project is archived")
 }
 
 func CreateFromDirectory(dir string) Migrations {
@@ -111,12 +101,16 @@ func newMigrationFromPath(path string) Migration {
 		Version: version,
 	}
 
-	reader, err := os.Open(path)
+	file, err := os.Open(path)
 	if err != nil {
 		panic(err)
 	}
 
-	scanner := bufio.NewScanner(reader)
+	defer func() {
+		_ = file.Close()
+	}()
+
+	scanner := bufio.NewScanner(file)
 
 	up := true
 
